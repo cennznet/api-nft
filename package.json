@@ -1,0 +1,35 @@
+{
+  "name": "@cennznet/api-nft",
+  "version": "1.0.0",
+  "description": "CENNZnet NFT Scanner and API",
+  "repository": "ssh://git@github.com/cennznet/api-nft",
+  "author": "developers@centrality.ai",
+  "license": "Apache",
+  "scripts": {
+    "start:api": "ts-node src/api/index.ts",
+    "start:scanner": "ts-node src/scanner/scanNFTStats.ts",
+    "start:head-tracker": "ts-node src/scanner/trackfinalizeHead.ts",
+    "format": "prettier --config .prettierrc.json ./ --write"
+  },
+  "dependencies": {
+    "@cennznet/api": "2.1.0",
+    "@tsconfig/node16": "^1.0.2",
+    "axios": "^0.27.2",
+    "bignumber.js": "^9.0.0",
+    "dotenv": "^8.2.0",
+    "fastify": "^3.22.0",
+    "fastify-mongodb": "^4.1.0",
+    "fastify-plugin": "^3.0.0",
+    "moment": "^2.29.1",
+    "mongoose": "^6.0.9",
+    "ts-node": "^10.7.0",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8",
+    "@types/node": "^17.0.21",
+    "@types/prettier": "^2",
+    "prettier": "^2.5.1",
+    "typescript": "^4.6.2"
+  }
+}
