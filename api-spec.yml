@@ -1,269 +1,187 @@
 # NFT API SPEC
+openapi: 3.0.3
 info:
-  description: CENNZnet NFT API
   version: 1.0.0
-  title: NFT API
+  title: CENNZnet NFT API
 
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 
-
 paths:
-  /nft/token/${collectionId}/${seriesId}/${serialNumber}
-  get:
-    summary: Get history of token by tokenId [collectionId, seriesId, serialNumber]
-    description: |
-      By passing in the appropriate token info, you can track all
-      available state a token get into in its life
-    produces:
-      - application/json
-    responses:
-      200:
-        description: search results matching tokenId
-        schema:
-          type: object
+  "/nft/token/${tokenId}":
+    get:
+      tags:
+        - Token
+      description: Get token details by `tokenId`
+      parameters:
+        - name: tokenId
+          in: path
+          description: Token ID
+          required: true
+          example: 63_1_0
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NFTItem"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  "/nft/listing/${listingId}":
+    get:
+      tags:
+        - Listing
+      description: Get listing details by `listingId`
+      parameters:
+        - name: listingId
+          in: path
+          description: Listing ID
+          required: true
+          example: 3073
+          schema:
+            type: number
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingItem"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  "/nft/account/${accountAddress}":
+    get:
+      tags:
+        - Account
+      description: Get all NFTs from an `accountAddress`
+      parameters:
+        - name: accountAddress
+          in: path
+          description: Account Address
+          required: true
+          example: "5G9V1NhN7kvHY2xfQyCAsu97DFCf6aSM1f41gnqBFPtESmKh"
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NFTItem"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    NFTItem:
+      type: object
+      properties:
+        tokenId:
+          type: string
+          example: "63_1_0"
+        metadataUri:
+          type: string
+          example: "ipfs://QmcKUVkg88sukz4Wm1QpmYSXHNE923Rgncw1JVfwjPCxyw/metadata.json"
+        owner:
+          type: string
+          example: "5D2XVbob7zYjWzhkZ8nPcBgR7yEhAiXE5rYV8qhKdktrcHSq"
+        timeline:
+          type: array
           items:
-            $ref: '#/definitions/TokenItem'
-      400:
-        schema:
-        "error":"Token Not found!"
-definitions:
-  TokenItem:
-    type: object
-    required:
-      - tokenId
-      - imgUrl
-      - createdDate
-      - hash
-      - listingId
-      - listingType
-      - amount
-      - tokenType
-      - history
-    properties:
-      tokenId:
-        type: string
-        example: "55/0/461"
-      imgUrl:
-        type: string
-        example: 'ipfs://QmRmbxCCUNUam6bPFY6zfECXmXzcCJJTDJzbS3ep2JKTcd'
-      createdDate:
-        type: string
-        desc: date when the NFT was created
-        format: date-time
-        example: '2016-08-29T09:12:33.001Z'
-      hash:
-        type: string (Txhash)
-        example: "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
-      listingId:
-        type: string
-        desc: last/recent listing id for a token which is not closed yet
-        example: "3073"
-      listingType:
-        type: string
-        desc: Fixed|Auction
-        example: "Fixed"
-      amount:
-        type: string
-        desc: Fixed price for fixed listing or reserve price for auction
-        example: "11 ETH"
-      tokenType:
-        type: string
-        desc: GA in which NFT is listed
-        example: 1002
-      NFTHistory:
-        type: array
-        $ref: '#/definitions/NFTHistory'
-  NFTHistory:
-    type: array
-    desc: life cycle of an nft
-    required:
-      - status
-      - hash
-      - date
-      - owner
-    properties:
-      status:
-        type: string
-        desc: [
-            NFT_CREATED | NFT_TRANSFERED | LISTING_STARTED | LISTING_CLOSED | ]
-        example: LISTING_STARTED
-      hash:
-        type: string (txhash)
-        desc: hash at this state of nft
-        example:  "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
-      date:
-        type: string
-        format: date-time
-        desc: date when the nft was in this state
-        example: '2016-08-29T09:12:33.001Z'
-      owner:
-        type: string
-        desc: Owner at this state
-        example: "5H1r8nHebx9Qsis7UceLLGMGsG28pFjUiTa6Mewz91KhqKq9"
-basePath: /nft/nft_token/
+            $ref: "#/components/schemas/NFTRecord"
 
+    NFTRecord:
+      type: object
+      properties:
+        type:
+          type: string
+          description: NFT_CREATED | NFT_LISTED | NFT_TRANSFERRED
+          example: NFT_LISTED
+        txHash:
+          type: string
+          example: "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"
+        listingId:
+          type: number
+          example: 3073
 
-paths:
-  /nft/listing/${listingId}
-  get:
-    summary: NFT listing info for listing Id, including that of closed listings
-    description: |
-      By passing in the appropriate listing id, you can track information about listing and if its of type auction, also shows bids that a listing id receive.
-    produces:
-      - application/json
-    responses:
-      200:
-        description: search results matching listingId
-        schema:
-          type: object
+    ListingItem:
+      type: object
+      properties:
+        listingId:
+          type: number
+          example: 3073
+        listingType:
+          type: string
+          example: Fixed
+          description: FIXED | AUCTION
+        tokenIds:
+          type: string
+          example: ["63_1_0"]
+        timeline:
+          type: array
           items:
-            $ref: '#/definitions/ListingItem'
-      400:
-        schema:
-        "error":"Listing Not found!"
-definitions:
-  ListingItem:
-    type: object
-    required:
-      - listingId
-      - date
-      - closeDate
-      - type
-      - status
-      - seller
-      - assetId
-      - tokenIds
-      - sellPrice
-      - buyPrice
-      - bid
-    properties:
-      listingId:
-        type: string
-        example: 3073
-      date:
-        type: string
-        format: date-time
-        desc: date when the nft was listed
-        example: '2022-04-30T09:42:25.001Z'
-      closeDate:
-        type: string
-        desc: date when the NFT will expire
-        format: date-time
-        example: '2016-08-29T09:12:33.001Z'
-      type:
-        type: string
-        desc: [Fixed | Auction]
-      status:
-        type: string
-        desc: [LISTING_STARTED | LISTING_CANCELED | LISTING_CLOSED]
-        example: LISTING_STARTED
-      seller:
-        type: string
-        desc: NFT owner who listed the NFT
-        example: "5H1r8nHebx9Qsis7UceLLGMGsG28pFjUiTa6Mewz91KhqKq9"
-      buyPrice:
-        type: string
-        desc: Fixed price for fixed listing or reserve price for auction
-        example: "11 ETH"
-      assetId:
-        type: string
-        desc: GA in which NFT is listed
-        example: 1002
-      tokenIds:
-        type: array
-        desc: All the tokens for this listing
-      buyPrice:
-        type: string
-        desc: In case of Fixed type listing, this price is same as sell price if some one buy or value from highest bid
-        example: "11 ETH"
-      bid:
-        type: array
-        $ref: '#/definitions/BidHistory'
-  BidHistory:
-    type: array
-    desc: All the bids a listing get in case of auction type. For fixed type this is []
-    required:
-      - address
-      - amount
-      - date
-      - hash
-    properties:
-      address:
-        type: string
-        desc: Bidder for this listing
-        example: "5H1r8nHebx9Qsis7UceLLGMGsG28pFjUiTa6Mewz91KhqKq9"
-      amount:
-        type: string
-        desc: Bid value
-        example: "11.1 ETH"
-      date:
-        format: date-time
-        desc: date when the nft was in this state
-        example: '2016-08-29T09:12:33.001Z'
-      hash:
-        type: string (txHash)
-        desc: hash at this bid of nft
-        example:  "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
+            $ref: "#/components/schemas/ListingRecord"
+        assetId:
+          type: number
+          example: 1
+        assetSymbol:
+          type: string
+          example: CENNZ
 
-
-basePath: /nft/listing/
-
-
-paths:
-  /nft/wallet/${walletAddress}
-  get:
-    summary: All NFT related tx history for a wallet address
-    description: |
-      By passing in the appropriate wallet address, you can track information about all the nft tokens and its state
-    produces:
-      - application/json
-    responses:
-      200:
-        description: search results matching wallet address
-        schema:
-          type: object
-          items:
-            $ref: '#/definitions/WalletNFTItems'
-      400:
-        schema:
-        "error":"Listing Not found!"
-definitions:
-  WalletNFTItems:
-    type: object
-    required:
-      - nft
-    properties:
-      nft:
-        type: array
-        $ref: '#/definitions/NFT'
-  NFT:
-    type: array
-    desc: NFT and its complete history
-    required:
-      - tokenId
-      - status
-      - data
-    properties:
-      tokenId:
-        type: string
-        desc: users tokenId
-        example: "[55,0,461]"
-      status:
-        type: string
-        desc: LISTING_STARTED | LISTING_CANCELED | LISTING_CLOSED | NFT_CREATED | NFT_TRANSFERRED | NFT_BURN
-        example: LISTING_STARTED
-      data:
-        type: object
-        $ref: '#/definitions/NFT_DATA'
-  NFT_DATA:
-    type: JSON
-    desc: this data can be a different json depending on the state of nft for example for LISTING_STARTED
-    example: {"type":"Fixed","txHash":"0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51","listingId":3073,"amount":"11 ETH","assetId":1002,"date":"2022-04-30T09:42:25.001Z","owner":"5H1r8nHebx9Qsis7UceLLGMGsG28pFjUiTa6Mewz91KhqKq9"}
-
-
-basePath: /nft/wallet/
-
-schemes:
-  - https
+    ListingRecord:
+      type: object
+      properties:
+        type:
+          type: string
+          description: LISTING_STARTED | LISTING_CLOSED | LISTING_CANCELLED | LISTING_BID
+          example: LISTING_STARTED
+        txHash:
+          type: string
+          example: "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"
+        listedPrice:
+          type: number
+          example: 5000
+        soldPrice:
+          type: number
+          example: null
+        bidPrice:
+          type: number
+          example: null
