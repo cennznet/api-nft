@@ -97,6 +97,7 @@ export async function getTokenDetails(
 			};
 		});
 		const response = {
+			tokenId: tokenId,
 			createdDate: createdDate,
 			imgUrl: imgUrl,
 			listingId: listingId,
@@ -119,12 +120,13 @@ export async function getListingDetails(
 	reply: FastifyReply
 ): Promise<FastifyReply> {
 	const eventTracker = this.mongo.db.collection("EventTracker");
+	const listingId = (request.params as ListingQueryObject).listingId;
 	let data = await eventTracker
-		.find({ streamId: (request.params as ListingQueryObject).listingId })
+		.find({ streamId: listingId })
 		.sort({ version: "asc" });
 	data = await data.toArray();
 	if (!data || data.length === 0)
-		return reply.status(500).send({ error: "Token Not found!" });
+		return reply.status(500).send({ error: "Listing Not found!" });
 	const listingData = data as EventTracker[];
 	let date = "N/A",
 		type = "N/A",
@@ -174,6 +176,7 @@ export async function getListingDetails(
 			return { address, amount, date, hash };
 		});
 	const response = {
+		listingId,
 		date,
 		closeDate,
 		type,
@@ -199,7 +202,7 @@ export async function getWalletDetails(
 	}).sort({ version: "asc" });
 	data = await data.toArray();
 	if (!data || data.length === 0)
-		return reply.status(500).send({ error: "Token Not found!" });
+		return reply.status(500).send({ error: "Wallet has no NFTs!" });
 	const walletData = data as EventTracker[];
 	let nft = walletData.map((walletInfo) => {
 		const walletDetails = JSON.parse(walletInfo.data);
