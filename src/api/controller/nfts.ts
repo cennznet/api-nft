@@ -41,7 +41,7 @@ export async function getTokenDetails(
 		nftData = await nftData.toArray();
 		if (!nftData || nftData.length === 0)
 			return reply.status(500).send({ error: "Token Not found!" });
-		let imgUrl = "",
+		let metadataUri = "",
 			hash = "",
 			createdDate = "";
 		// for a token Id NFT created will be one time
@@ -51,7 +51,7 @@ export async function getTokenDetails(
 		if (createdDetails) {
 			const createdEventsData = JSON.parse(createdDetails.data);
 			createdDate = createdEventsData.date;
-			imgUrl = createdEventsData.imgUrl;
+			metadataUri = createdEventsData.metadataUri;
 		}
 		let listingId = "N/A",
 			amount = "N/A",
@@ -99,7 +99,7 @@ export async function getTokenDetails(
 		const response = {
 			tokenId: tokenId,
 			createdDate: createdDate,
-			imgUrl: imgUrl,
+			metadataUri: metadataUri,
 			listingId: listingId,
 			amount: amount,
 			tokenType: tokenType,
