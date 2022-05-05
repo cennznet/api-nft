@@ -12,18 +12,24 @@ export async function trackEventData(
 	signer
 ) {
 	try {
-		logger.info(
-			`saving event for streamId ${streamId} for signer ${signer} with data ${data} in db`
-		);
-		const eventTracker = new EventTracker({
-			streamId: streamId,
+		// check if event exist in db, before adding it
+		const existingEvent = await EventTracker.exists({ streamId: streamId,
 			streamType: type,
-			version: version, // blocknumber
-			data: data,
-			signer: signer,
-			eventType: eventType,
-		});
-		await eventTracker.save();
+			version: version });
+		if (!existingEvent) {
+			logger.info(
+				`saving event for streamId ${streamId} for signer ${signer} with data ${data} in db`
+			);
+			const eventTracker = new EventTracker({
+				streamId: streamId,
+				streamType: type,
+				version: version, // blocknumber
+				data: data,
+				signer: signer,
+				eventType: eventType,
+			});
+			await eventTracker.save();
+		}
 	} catch (e) {
 		logger.error(
 			`saving event for streamId ${streamId} for signer ${signer} with data ${data} in db failed::${e}`
@@ -33,7 +39,13 @@ export async function trackEventData(
 
 export async function trackEventDataSet(tokens) {
 	try {
+		const streamIds = [];
+		const streamTypes = [];
+		const versions = [];
 		const data = tokens.map((token) => {
+			streamIds.push(token[0].toString());
+			streamTypes.push(token[1]);
+			versions.push(token[2]);
 			return {
 				streamId: token[0].toString(),
 				streamType: token[1],
@@ -43,10 +55,19 @@ export async function trackEventDataSet(tokens) {
 				eventType: token[5],
 			};
 		});
-		logger.info(
-			`saving multiple event data for  ${JSON.stringify(data)} in db`
-		);
-		await EventTracker.insertMany(data);
+
+		// check if event exist in db, before adding it
+		const checkDataExist = await EventTracker.find({
+			streamId: { $in: streamIds },
+			streamType: { $in: streamTypes },
+			version: { $in: versions }
+		});
+		if (!checkDataExist) {
+			logger.info(
+				`saving multiple event data for  ${JSON.stringify(data)} in db`
+			);
+			await EventTracker.insertMany(data);
+		}
 	} catch (e) {
 		logger.error(`saving event data in db failed::${e}`);
 	}

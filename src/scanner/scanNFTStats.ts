@@ -37,6 +37,7 @@ async function main() {
 			fetchOldData = null;
 		} else {
 			const blockScanned = await LastBlockScan.findOne({});
+			logger.info(`blockScanned: ${blockScanned}`);
 			if (blockScanned) {
 				const { processedBlock, finalizedBlock } = blockScanned;
 				globalBlockNumbers = range(
@@ -48,10 +49,10 @@ async function main() {
 
 		logger.info(`Global block number: ${globalBlockNumbers}`);
 
-		const chunkSize = 100;
+		const chunkSize = 50;
 		for (let i = 0; i < globalBlockNumbers.length; i += chunkSize) {
 			const chunk = globalBlockNumbers.slice(i, i + chunkSize);
-
+			logger.info(`Processing chunk ${chunk}`);
 			let apiAt;
 			await Promise.all(
 				chunk.map(async (blockNumber) => {
@@ -123,7 +124,9 @@ async function main() {
 					await updateProcessedBlockInDB(blockNumber);
 				})
 			);
+			logger.info(`Completed chunk ${chunk}`);
 			await sleep(500);
+			logger.info(`looping thro next chunk`);
 		}
 	}
 }
