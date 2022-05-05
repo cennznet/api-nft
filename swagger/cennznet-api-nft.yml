@@ -1,0 +1,187 @@
+# NFT API SPEC
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: CENNZnet NFT API
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+paths:
+  "/nft/token/${tokenId}":
+    get:
+      tags:
+        - Token
+      description: Get token details by `tokenId`
+      parameters:
+        - name: tokenId
+          in: path
+          description: Token ID
+          required: true
+          example: 63_1_0
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NFTItem"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  "/nft/listing/${listingId}":
+    get:
+      tags:
+        - Listing
+      description: Get listing details by `listingId`
+      parameters:
+        - name: listingId
+          in: path
+          description: Listing ID
+          required: true
+          example: 3073
+          schema:
+            type: number
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingItem"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  "/nft/account/${accountAddress}":
+    get:
+      tags:
+        - Account
+      description: Get all NFTs from an `accountAddress`
+      parameters:
+        - name: accountAddress
+          in: path
+          description: Account Address
+          required: true
+          example: "5G9V1NhN7kvHY2xfQyCAsu97DFCf6aSM1f41gnqBFPtESmKh"
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NFTItem"
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    NFTItem:
+      type: object
+      properties:
+        tokenId:
+          type: string
+          example: "63_1_0"
+        metadataUri:
+          type: string
+          example: "ipfs://QmcKUVkg88sukz4Wm1QpmYSXHNE923Rgncw1JVfwjPCxyw/metadata.json"
+        owner:
+          type: string
+          example: "5D2XVbob7zYjWzhkZ8nPcBgR7yEhAiXE5rYV8qhKdktrcHSq"
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/NFTRecord"
+
+    NFTRecord:
+      type: object
+      properties:
+        type:
+          type: string
+          description: NFT_CREATED | NFT_LISTED | NFT_TRANSFERRED
+          example: NFT_LISTED
+        txHash:
+          type: string
+          example: "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"
+        listingId:
+          type: number
+          example: 3073
+
+    ListingItem:
+      type: object
+      properties:
+        listingId:
+          type: number
+          example: 3073
+        listingType:
+          type: string
+          example: Fixed
+          description: FIXED | AUCTION
+        tokenIds:
+          type: string
+          example: ["63_1_0"]
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListingRecord"
+        assetId:
+          type: number
+          example: 1
+        assetSymbol:
+          type: string
+          example: CENNZ
+
+    ListingRecord:
+      type: object
+      properties:
+        type:
+          type: string
+          description: LISTING_STARTED | LISTING_CLOSED | LISTING_CANCELLED | LISTING_BID
+          example: LISTING_STARTED
+        txHash:
+          type: string
+          example: "0xfad76129df35a6bb5a690ba48d24129f2bd553a23bbd49dd904528e72afa5b51"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2016-08-29T09:12:33.001Z"
+        listedPrice:
+          type: number
+          example: 5000
+        soldPrice:
+          type: number
+          example: null
+        bidPrice:
+          type: number
+          example: null
