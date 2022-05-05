@@ -1,6 +1,6 @@
 // Track transfers
 import { trackEventData, trackEventDataSet } from "../dbOperations";
-import { Params } from "@/src/scanner/utils/commonUtils";
+import { Params } from "./commonUtils";
 import { logger } from "../../logger";
 
 export async function trackTransferData(
