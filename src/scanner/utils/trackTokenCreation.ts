@@ -16,11 +16,11 @@ export async function trackUniqueMintData(
 ) {
 	try {
 		const tokenId = JSON.stringify(eventData[1]); // tokenId in format [17,5,0] - [collectionId, seriesId, serialNo]
-		const imgUrl = api.registry
+		const metaDataUrl = api.registry
 			.createType(params[3].type, params[3].value)
 			.toHuman();
 		const tokenData = {
-			imgUrl: imgUrl,
+			metaDataUrl: metaDataUrl,
 			date: date,
 			owner: owner,
 			txHash: txHash,
@@ -73,11 +73,11 @@ export async function trackTokenSeriesData(
 					p.type === "MetadataBaseURI"
 			) || 4;
 		// @ts-ignore
-		const imgUrl = api.registry
+		const metaDataUrl = api.registry
 			.createType(params[imageIndex].type, params[imageIndex].value)
 			.toHuman();
 		const tokenData = {
-			imgUrl: imgUrl,
+			metaDataUrl: metaDataUrl,
 			date: date,
 			owner: owner,
 			txHash: txHash,
@@ -121,7 +121,7 @@ export async function trackAdditionalTokenData(
 		const seriesId = eventData[1];
 		const noOfTokens = eventData[2]; // quantity
 
-		const [_nextSerialNumber, _imgUrl] = await Promise.all([
+		const [_nextSerialNumber, _metadataUrl] = await Promise.all([
 			api.query.nft.nextSerialNumber.at(blockHash, collectionId, seriesId),
 			api.query.nft.seriesMetadataScheme
 				? api.query.nft.seriesMetadataScheme.at(
@@ -132,10 +132,10 @@ export async function trackAdditionalTokenData(
 				: api.query.nft.seriesMetadataURI.at(blockHash, collectionId, seriesId),
 		]);
 		const nextSerialNumber = (_nextSerialNumber as u128).toNumber();
-		const imgUrl = _imgUrl.toHuman();
+		const metadataUrl = _metadataUrl.toHuman();
 
 		const tokenData = {
-			imgUrl: imgUrl,
+			metadataUrl: metadataUrl,
 			date: date,
 			owner: owner,
 			txHash: txHash,
