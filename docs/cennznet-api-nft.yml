@@ -19,7 +19,7 @@ paths:
           in: path
           description: Token ID
           required: true
-          example: 63_1_0
+          example: "63_1_0"
           schema:
             type: string
       responses:
