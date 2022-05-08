@@ -49,7 +49,7 @@ async function main() {
 
 		logger.info(`Global block number: ${globalBlockNumbers}`);
 
-		const chunkSize = 50;
+		const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 20;
 		for (let i = 0; i < globalBlockNumbers.length; i += chunkSize) {
 			const chunk = globalBlockNumbers.slice(i, i + chunkSize);
 			logger.info(`Processing chunk ${chunk}`);
@@ -125,7 +125,8 @@ async function main() {
 				})
 			);
 			logger.info(`Completed chunk ${chunk}`);
-			await sleep(500);
+			const timeMs = process.env.SLEEP ? parseInt(process.env.SLEEP) : 5000;
+			await sleep(timeMs);
 			logger.info(`looping thro next chunk`);
 		}
 	}
