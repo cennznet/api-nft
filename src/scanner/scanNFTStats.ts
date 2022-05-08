@@ -49,7 +49,7 @@ async function main() {
 
 		logger.info(`Global block number: ${globalBlockNumbers}`);
 
-		const chunkSize = 50;
+		const chunkSize = 20;
 		for (let i = 0; i < globalBlockNumbers.length; i += chunkSize) {
 			const chunk = globalBlockNumbers.slice(i, i + chunkSize);
 			logger.info(`Processing chunk ${chunk}`);
@@ -125,7 +125,7 @@ async function main() {
 				})
 			);
 			logger.info(`Completed chunk ${chunk}`);
-			await sleep(500);
+			await sleep(5000);
 			logger.info(`looping thro next chunk`);
 		}
 	}
