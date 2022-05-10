@@ -77,21 +77,19 @@ export default async function getListingDetails(
 				nft.eventType === "LISTING_CANCELED" ||
 				nft.eventType === "LISTING_CLOSED"
 		);
-		if (listingClosed) {
-			if (listingClosed.eventType === "LISTING_CLOSED") {
-				const {
-					txHash,
-					date: timestamp,
-					price: soldPrice,
-				} = JSON.parse(listingClosed.data);
+		if (listingClosed?.eventType === "LISTING_CLOSED") {
+			const {
+				txHash,
+				date: timestamp,
+				price: soldPrice,
+			} = JSON.parse(listingClosed.data);
 
-				timeline.push({
-					type: listingClosed.eventType,
-					txHash,
-					timestamp,
-					soldPrice,
-				} as ListingTimeline);
-			}
+			timeline.push({
+				type: listingClosed.eventType,
+				txHash,
+				timestamp,
+				soldPrice,
+			} as ListingTimeline);
 		}
 
 		return reply.status(200).send({
