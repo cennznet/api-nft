@@ -1,27 +1,14 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply } from "fastify";
 import { logger } from "../../logger";
-
-interface TokenQueryObject {
-	tokenId: string;
-}
-
-interface ListingQueryObject {
-	listingId: string;
-}
-
-interface WalletQueryObject {
-	address: string;
-}
-
-interface EventTracker {
-	streamId: string;
-	data: string;
-	eventType: string;
-}
-
-type Request = FastifyRequest<{
-	Params: TokenQueryObject | ListingQueryObject | WalletQueryObject;
-}>;
+import {
+	EventTracker,
+	ListingQueryObject,
+	Request,
+	Timeline,
+	TokenQueryObject,
+	NftDetails,
+	WalletQueryObject,
+} from "@/src/types";
 
 export async function getTokenDetails(
 	request: Request,
@@ -50,7 +37,7 @@ export async function getTokenDetails(
 		const lastEvent = nftData.slice(-1)[0];
 		const { owner } = JSON.parse(lastEvent.data);
 
-		const timeline = nftData.map((nft) => {
+		const timeline: Timeline[] = nftData.map((nft) => {
 			const { date: timestamp, listingId, txHash } = JSON.parse(nft.data);
 			return {
 				type: nft.eventType,
@@ -65,7 +52,7 @@ export async function getTokenDetails(
 			metadataUri,
 			owner,
 			timeline,
-		});
+		} as NftDetails);
 	} catch (e) {
 		logger.error("err:", e);
 		return reply.status(404).send();
@@ -163,7 +150,9 @@ export async function getWalletDetails(
 	if (!data || data.length === 0)
 		return reply.status(500).send({ error: "Wallet has no NFTs!" });
 
-	const nftMap = data.map((walletInfo) => {
+	const nftMap = [] as NftDetails[];
+
+	data.forEach((walletInfo) => {
 		const { streamId: tokenIdRaw } = walletInfo;
 		const {
 			date: timestamp,
@@ -176,18 +165,25 @@ export async function getWalletDetails(
 		const tokenIdArray = tokenIdRaw
 			.slice(tokenIdRaw.indexOf("[") + 1, tokenIdRaw.indexOf("]"))
 			.split(",");
+		const tokenId = `${tokenIdArray[0]}_${tokenIdArray[1]}_${tokenIdArray[2]}`;
 
-		return {
-			tokenId: `${tokenIdArray[0]}_${tokenIdArray[1]}_${tokenIdArray[2]}`,
+		const timeline: Timeline = {
+			type: walletInfo.eventType,
+			txHash,
+			timestamp,
+			listingId,
+		};
+
+		if (tokenId === nftMap[nftMap.length - 1]?.tokenId) {
+			return nftMap[nftMap.length - 1].timeline.push(timeline);
+		}
+
+		nftMap.push({
+			tokenId,
 			metadataUri: metadataUri?.IpfsShared ?? metadataUri,
 			owner,
-			timeline: {
-				type: walletInfo.eventType,
-				txHash,
-				timestamp,
-				listingId,
-			},
-		};
+			timeline: [timeline],
+		} as NftDetails);
 	});
 
 	return reply.status(200).send(nftMap);
