@@ -2,7 +2,7 @@
 import { accuracyFormat } from "../formatBalance";
 import { extractTokenListingData, Params } from "./commonUtils";
 import { Api } from "@cennznet/api";
-import {Hash, Listing, Option} from "@cennznet/types";
+import { Hash, Listing, Option } from "@cennznet/types";
 import { logger } from "../../logger";
 
 export async function trackBuyData(

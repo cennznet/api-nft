@@ -158,7 +158,7 @@ export async function getWalletDetails(
 		signer: (request.params as WalletQueryObject).address,
 		streamType: 0,
 	}).sort({ version: "asc" });
-	data = await data.toArray() as EventTracker[];
+	data = (await data.toArray()) as EventTracker[];
 
 	if (!data || data.length === 0)
 		return reply.status(500).send({ error: "Wallet has no NFTs!" });
