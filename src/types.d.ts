@@ -37,16 +37,17 @@ export interface NftDetails {
 }
 
 export interface ListingTimeline extends Timeline {
-	listedPrice?: string;
+	type: string;
+	listedPrice?: number;
 	soldPrice?: string;
 	bidPrice?: string;
 }
 
-export interface ListingDetails extends NftDetails {
+export interface ListingDetails {
 	listingId: number;
 	listingType: string;
 	tokenIds: string[];
-	timeline: ListingTimeline;
+	timeline: ListingTimeline[];
 	assetId: number;
 	assetSymbol: string;
 }
