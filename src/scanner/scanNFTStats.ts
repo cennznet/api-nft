@@ -33,7 +33,10 @@ async function main() {
 		if (fetchOldData) {
 			const startDate = process.env.START_DATE;
 			const endDate = process.env.END_DATE;
-			globalBlockNumbers = await fetchNFTBlockFromUncoverForRange(startDate, endDate);
+			globalBlockNumbers = await fetchNFTBlockFromUncoverForRange(
+				startDate,
+				endDate
+			);
 			fetchOldData = null;
 		} else {
 			const blockScanned = await LastBlockScan.findOne({});
@@ -49,7 +52,9 @@ async function main() {
 
 		logger.info(`Global block number: ${globalBlockNumbers}`);
 
-		const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 20;
+		const chunkSize = process.env.CHUNK_SIZE
+			? parseInt(process.env.CHUNK_SIZE)
+			: 20;
 		for (let i = 0; i < globalBlockNumbers.length; i += chunkSize) {
 			const chunk = globalBlockNumbers.slice(i, i + chunkSize);
 			logger.info(`Processing chunk ${chunk}`);
