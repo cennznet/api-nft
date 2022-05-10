@@ -153,24 +153,42 @@ export async function getWalletDetails(
 	reply: FastifyReply
 ): Promise<FastifyReply> {
 	const EventTracker = this.mongo.db.collection("EventTracker");
+
 	let data = await EventTracker.find({
 		signer: (request.params as WalletQueryObject).address,
 		streamType: 0,
 	}).sort({ version: "asc" });
-	data = await data.toArray();
+	data = await data.toArray() as EventTracker[];
+
 	if (!data || data.length === 0)
 		return reply.status(500).send({ error: "Wallet has no NFTs!" });
-	const walletData = data as EventTracker[];
-	let nft = walletData.map((walletInfo) => {
-		const walletDetails = JSON.parse(walletInfo.data);
-		const tokenId = walletInfo.streamId;
-		const status = walletInfo.eventType;
-		const data = walletDetails;
-		return { tokenId, status, data };
+
+	const nftMap = data.map((walletInfo) => {
+		const { streamId: tokenIdRaw } = walletInfo;
+		const {
+			date: timestamp,
+			listingId,
+			metadataUri,
+			owner,
+			txHash,
+		} = JSON.parse(walletInfo.data);
+
+		const tokenIdArray = tokenIdRaw
+			.slice(tokenIdRaw.indexOf("[") + 1, tokenIdRaw.indexOf("]"))
+			.split(",");
+
+		return {
+			tokenId: `${tokenIdArray[0]}_${tokenIdArray[1]}_${tokenIdArray[2]}`,
+			metadataUri: metadataUri?.IpfsShared ?? metadataUri,
+			owner,
+			timeline: {
+				type: walletInfo.eventType,
+				txHash,
+				timestamp,
+				listingId,
+			},
+		};
 	});
-	const response = {
-		nft,
-		address: (request.params as WalletQueryObject).address,
-	};
-	return reply.status(200).send(response);
+
+	return reply.status(200).send(nftMap);
 }
