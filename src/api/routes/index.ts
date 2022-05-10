@@ -6,7 +6,7 @@ import {
 
 export async function routes(fastify) {
 	fastify.get(
-		"/nft/token/:collectionId/:seriesId/:serialNumber",
+		"/nft/token/:tokenId",
 		getTokenDetails
 	);
 	fastify.get("/nft/listing/:listingId", getListingDetails);
