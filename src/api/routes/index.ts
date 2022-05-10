@@ -2,7 +2,7 @@ import {
 	getTokenDetails,
 	getListingDetails,
 	getWalletDetails,
-} from "../controller/nfts";
+} from "@/src/api/controller";
 
 export async function routes(fastify) {
 	fastify.get("/nft/token/:tokenId", getTokenDetails);
