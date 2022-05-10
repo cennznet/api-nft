@@ -1,5 +1,6 @@
 import { FastifyReply } from "fastify";
 import { logger } from "../../logger";
+import getTokenIdArray from "../utils/getTokenIdArray";
 import {
 	EventTracker,
 	ListingQueryObject,
@@ -8,6 +9,8 @@ import {
 	TokenQueryObject,
 	NftDetails,
 	WalletQueryObject,
+	ListingTimeline,
+	ListingDetails,
 } from "@/src/types";
 
 export async function getTokenDetails(
@@ -65,74 +68,91 @@ export async function getListingDetails(
 ): Promise<FastifyReply> {
 	const eventTracker = this.mongo.db.collection("EventTracker");
 	const listingId = (request.params as ListingQueryObject).listingId;
+
 	let data = await eventTracker
 		.find({ streamId: listingId })
 		.sort({ version: "asc" });
 	data = await data.toArray();
+
 	if (!data || data.length === 0)
 		return reply.status(500).send({ error: "Listing Not found!" });
+
 	const listingData = data as EventTracker[];
-	let date = "N/A",
-		type = "N/A",
-		closeDate = "N/A",
-		seller = "N/A",
-		tokenIds = [],
-		status,
+	let tokenIds = [],
+		listingType,
 		assetId,
-		sellPrice,
-		buyPrice;
+		sellPrice;
+
+	const timeline: ListingTimeline[] = [];
+
 	const listingStarted = listingData.find(
 		(nft) => nft.eventType === "LISTING_STARTED"
 	);
 	if (listingStarted) {
 		const eventDetails = JSON.parse(listingStarted.data);
-		date = eventDetails.date;
-		type = eventDetails.type;
-		closeDate = eventDetails.close;
-		seller = eventDetails.seller;
+
 		tokenIds = eventDetails.tokenIds;
-		status = listingStarted.eventType;
 		assetId = eventDetails.assetId;
 		sellPrice = eventDetails.sellPrice;
+		listingType = eventDetails.type;
+
+		const { txHash, date: timestamp, sellPrice: listedPrice } = eventDetails;
+
+		timeline.push({
+			type: listingStarted.eventType,
+			txHash,
+			timestamp,
+			listedPrice: Number(listedPrice.split(" ")[0]),
+		} as ListingTimeline);
 	}
+
+	// get all bids
+	listingData
+		.filter((list) => list.eventType === "NFT_BID")
+		.forEach((listing) => {
+			const {
+				txHash,
+				date: timestamp,
+				currentBid: bidPrice,
+			} = JSON.parse(listing.data);
+
+			timeline.push({
+				type: listing.eventType,
+				txHash,
+				timestamp,
+				bidPrice,
+			} as ListingTimeline);
+		});
+
 	const listingClosed = listingData.find(
 		(nft) =>
 			nft.eventType === "LISTING_CANCELED" || nft.eventType === "LISTING_CLOSED"
 	);
 	if (listingClosed) {
-		const eventDetails = JSON.parse(listingClosed.data);
-		type = eventDetails.type;
-		status = listingClosed.eventType;
-		tokenIds = eventDetails.tokenIds;
-		if (status === "LISTING_CLOSED") {
-			buyPrice = eventDetails.price;
+		if (listingClosed.eventType === "LISTING_CLOSED") {
+			const {
+				txHash,
+				date: timestamp,
+				price: soldPrice,
+			} = JSON.parse(listingClosed.data);
+
+			timeline.push({
+				type: listingClosed.eventType,
+				txHash,
+				timestamp,
+				soldPrice,
+			} as ListingTimeline);
 		}
 	}
-	// get all bid
-	const bid = listingData
-		.filter((list) => list.eventType === "NFT_BID")
-		.map((listing) => {
-			const eventDetails = JSON.parse(listing.data);
-			const address = eventDetails.currentBidSetter;
-			const amount = eventDetails.currentBid;
-			const date = eventDetails.date;
-			const hash = eventDetails.txHash;
-			return { address, amount, date, hash };
-		});
-	const response = {
-		listingId,
-		date,
-		closeDate,
-		type,
-		status,
-		seller,
+
+	return reply.status(200).send({
+		listingId: Number(listingId),
+		listingType,
+		tokenIds: getTokenIdArray(tokenIds),
+		timeline,
 		assetId,
-		tokenIds,
-		bid,
-		sellPrice,
-		buyPrice,
-	};
-	return reply.status(200).send(response);
+		assetSymbol: sellPrice.split(" ")[1],
+	} as ListingDetails);
 }
 
 export async function getWalletDetails(
