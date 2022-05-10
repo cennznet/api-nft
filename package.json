@@ -13,12 +13,12 @@
   },
   "dependencies": {
     "@cennznet/api": "2.1.0",
+    "@fastify/mongodb": "^5.0.0",
     "@tsconfig/node16": "^1.0.2",
     "axios": "^0.27.2",
     "bignumber.js": "^9.0.0",
     "dotenv": "^8.2.0",
     "fastify": "^3.22.0",
-    "fastify-mongodb": "^4.1.0",
     "fastify-plugin": "^3.0.0",
     "moment": "^2.29.1",
     "mongoose": "^6.0.9",
