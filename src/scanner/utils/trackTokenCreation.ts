@@ -1,9 +1,9 @@
 // store in db all the relevant data for mint unique nft
-import { trackEventData, trackEventDataSet } from "../dbOperations";
+import { trackEventData, trackEventDataSet } from "@/src/scanner/dbOperations";
 import { Api } from "@cennznet/api";
-import { Params } from "./commonUtils";
+import { Params } from "@/src/scanner/utils/commonUtils";
 import { u128 } from "@cennznet/types";
-import { logger } from "../../logger";
+import { logger } from "@/src/logger";
 
 export async function trackUniqueMintData(
 	eventData: number[],

@@ -1,7 +1,7 @@
 // track burn related data
-import { trackEventData, trackEventDataSet } from "../dbOperations";
-import { Params } from "./commonUtils";
-import { logger } from "../../logger";
+import { trackEventData, trackEventDataSet } from "@/src/scanner/dbOperations";
+import { Params } from "@/src/scanner/utils/commonUtils";
+import { logger } from "@/src/logger";
 
 export async function trackBurnData(
 	params: Params,

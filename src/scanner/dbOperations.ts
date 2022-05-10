@@ -1,6 +1,6 @@
 import { config } from "dotenv";
-import { logger } from "../logger";
-const { EventTracker, LastBlockScan } = require("../mongo/models");
+import { logger } from "@/src/logger";
+const { EventTracker, LastBlockScan } = require("@/src/mongo/models");
 config();
 
 export async function trackEventData(

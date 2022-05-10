@@ -1,14 +1,14 @@
 // track auction data
-import { accuracyFormat } from "../formatBalance";
+import { accuracyFormat } from "@/src/scanner/formatBalance";
 import {
 	convertBlockToDate,
 	extractTokenListingData,
 	Params,
-} from "./commonUtils";
-import { trackEventDataSet } from "../dbOperations";
+} from "@/src/scanner/utils/commonUtils";
+import { trackEventDataSet } from "@/src/scanner/dbOperations";
 import { Api } from "@cennznet/api";
 import { Listing, Option, Balance } from "@cennznet/types";
-import { logger } from "../../logger";
+import { logger } from "@/src/logger";
 
 export async function trackAuctionData(
 	eventData: number[],

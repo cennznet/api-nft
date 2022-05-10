@@ -1,7 +1,7 @@
-import { logger } from "../logger";
+import { logger } from "@/src/logger";
 
 const { Api } = require("@cennznet/api");
-import { updateFinalizedBlock } from "./dbOperations";
+import { updateFinalizedBlock } from "@/src/scanner/dbOperations";
 import mongoose from "mongoose";
 
 async function main(networkName) {

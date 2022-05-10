@@ -1,9 +1,9 @@
 // token series name update
-import { Params } from "./commonUtils";
+import { Params } from "@/src/scanner/utils/commonUtils";
 import { Api } from "@cennznet/api";
 import { u128 } from "@cennznet/types";
-import { extractTokenList } from "./trackTokenCreation";
-import { logger } from "../../logger";
+import { extractTokenList } from "@/src/scanner/utils/trackTokenCreation";
+import { logger } from "@/src/logger";
 
 export async function trackSeriesNameData(
 	params: Params,
