@@ -1,6 +1,6 @@
 import { config } from "dotenv";
-import { logger } from "../logger";
-const { EventTracker, LastBlockScan } = require("../mongo/models");
+import { logger } from "@/src/logger";
+const { EventTracker, LastBlockScan } = require("@/src/mongo/models");
 config();
 
 export async function trackEventData(
@@ -13,9 +13,11 @@ export async function trackEventData(
 ) {
 	try {
 		// check if event exist in db, before adding it
-		const existingEvent = await EventTracker.exists({ streamId: streamId,
+		const existingEvent = await EventTracker.exists({
+			streamId: streamId,
 			streamType: type,
-			version: version });
+			version: version,
+		});
 		if (!existingEvent) {
 			logger.info(
 				`saving event for streamId ${streamId} for signer ${signer} with data ${data} in db`
@@ -60,7 +62,7 @@ export async function trackEventDataSet(tokens) {
 		const checkDataExist = await EventTracker.find({
 			streamId: { $in: streamIds },
 			streamType: { $in: streamTypes },
-			version: { $in: versions }
+			version: { $in: versions },
 		});
 		if (!checkDataExist) {
 			logger.info(

@@ -1,5 +1,5 @@
 // common function
-import { trackEventDataSet } from "../dbOperations";
+import { trackEventDataSet } from "@/src/scanner/dbOperations";
 import { bnToBn, extractTime, u8aToString } from "@polkadot/util";
 
 export interface Params {

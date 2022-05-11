@@ -1,23 +1,23 @@
 import { BlockHash, EventRecord } from "@polkadot/types/interfaces";
-import { processAuctionSoldEvent } from "./utils/trackTokenAuction";
+import { processAuctionSoldEvent } from "@/src/scanner/utils/trackTokenAuction";
 
 import { Api } from "@cennznet/api";
 import { config } from "dotenv";
-import { logger } from "../logger";
+import { logger } from "@/src/logger";
 import { Vec } from "@polkadot/types-codec";
 import mongoose from "mongoose";
 import { SignedBlock } from "@polkadot/types/interfaces/runtime";
 import { fetchNFTBlockFromUncoverForRange } from "./utils/fetchNFTBlockNumberForRange";
-import { updateProcessedBlockInDB } from "./dbOperations";
-import { processNFTExtrinsicData } from "./utils/processNFTExtrinsic";
+import { updateProcessedBlockInDB } from "@/src/scanner/dbOperations";
+import { processNFTExtrinsicData } from "@/src/scanner/utils/processNFTExtrinsic";
 import {
 	fetchSupportedAssets,
 	filterExtrinsicEvents,
 	getExtrinsicParams,
 	getTimestamp,
 	isExtrinsicSuccessful,
-} from "./utils/commonUtils";
-const { LastBlockScan } = require("../mongo/models");
+} from "@/src/scanner/utils/commonUtils";
+const { LastBlockScan } = require("@/src/mongo/models");
 config();
 
 const range = (start, stop) =>
@@ -33,7 +33,10 @@ async function main() {
 		if (fetchOldData) {
 			const startDate = process.env.START_DATE;
 			const endDate = process.env.END_DATE;
-			globalBlockNumbers = await fetchNFTBlockFromUncoverForRange(startDate, endDate);
+			globalBlockNumbers = await fetchNFTBlockFromUncoverForRange(
+				startDate,
+				endDate
+			);
 			fetchOldData = null;
 		} else {
 			const blockScanned = await LastBlockScan.findOne({});
@@ -49,7 +52,9 @@ async function main() {
 
 		logger.info(`Global block number: ${globalBlockNumbers}`);
 
-		const chunkSize = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 20;
+		const chunkSize = process.env.CHUNK_SIZE
+			? parseInt(process.env.CHUNK_SIZE)
+			: 20;
 		for (let i = 0; i < globalBlockNumbers.length; i += chunkSize) {
 			const chunk = globalBlockNumbers.slice(i, i + chunkSize);
 			logger.info(`Processing chunk ${chunk}`);

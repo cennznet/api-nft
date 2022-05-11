@@ -1,20 +1,29 @@
-import { logger } from "../../logger";
+import { logger } from "@/src/logger";
 import {
 	trackAdditionalTokenData,
 	trackTokenSeriesData,
 	trackUniqueMintData,
-} from "./trackTokenCreation";
-import { trackSeriesNameData } from "./trackTokenName";
+} from "@/src/scanner/utils/trackTokenCreation";
+import { trackSeriesNameData } from "@/src/scanner/utils/trackTokenName";
 import {
 	trackTransferBatchData,
 	trackTransferData,
-} from "./trackTokenTransfers";
-import { trackBurnBatchData, trackBurnData } from "./trackTokenBurn";
-import { trackSellBundleData, trackSellData } from "./trackTokenSell";
-import { trackBuyData } from "./trackTokenBuy";
-import { trackAuctionBundleData, trackAuctionData } from "./trackTokenAuction";
-import { trackBidData } from "./trackBidData";
-import { trackCancelSaleData } from "./trackSaleCancel";
+} from "@/src/scanner/utils/trackTokenTransfers";
+import {
+	trackBurnBatchData,
+	trackBurnData,
+} from "@/src/scanner/utils/trackTokenBurn";
+import {
+	trackSellBundleData,
+	trackSellData,
+} from "@/src/scanner/utils/trackTokenSell";
+import { trackBuyData } from "@/src/scanner/utils/trackTokenBuy";
+import {
+	trackAuctionBundleData,
+	trackAuctionData,
+} from "@/src/scanner/utils/trackTokenAuction";
+import { trackBidData } from "@/src/scanner/utils/trackBidData";
+import { trackCancelSaleData } from "@/src/scanner/utils/trackSaleCancel";
 
 export async function processNFTExtrinsicData({
 	method,
