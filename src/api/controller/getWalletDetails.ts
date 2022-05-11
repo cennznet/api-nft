@@ -22,7 +22,7 @@ export default async function getWalletDetails(
 		data = (await data.toArray()) as EventTracker[];
 
 		if (!data || data.length === 0)
-			return reply.status(500).send({ error: "Wallet has no NFTs!" });
+			return reply.status(404).send({ error: "Not Found" });
 
 		const nftMap = [] as NftDetails[];
 
@@ -63,6 +63,6 @@ export default async function getWalletDetails(
 		return reply.status(200).send(nftMap);
 	} catch (e) {
 		logger.error("err:", e);
-		return reply.status(404).send({ error: e.message });
+		return reply.status(500).send({ error: e.message });
 	}
 }

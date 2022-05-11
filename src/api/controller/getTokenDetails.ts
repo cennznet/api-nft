@@ -1,4 +1,10 @@
-import { NftDetails, Request, Timeline, TokenQueryObject } from "@/src/types";
+import {
+	EventTracker,
+	NftDetails,
+	Request,
+	Timeline,
+	TokenQueryObject,
+} from "@/src/types";
 import { FastifyReply } from "fastify";
 import { logger } from "@/src/logger";
 
@@ -13,13 +19,13 @@ export default async function getTokenDetails(
 		const tokenIdArray = tokenIdRaw.split("_");
 		const tokenId = `[${tokenIdArray[0]},${tokenIdArray[1]},${tokenIdArray[2]}]`;
 
-		let nftData = await eventTracker
+		const nftData = (await eventTracker
 			.find({ streamId: tokenId })
-			.sort({ version: "asc" });
-		nftData = await nftData.toArray();
+			.sort({ version: "asc" })
+			.toArray()) as EventTracker[];
 
-		if (!nftData || nftData.length === 0)
-			return reply.status(500).send({ error: "Token Not found!" });
+		if (nftData?.length === 0)
+			return reply.status(404).send({ error: "Not Found" });
 
 		const createdDetails = nftData.find(
 			(nft) => nft.eventType === "NFT_CREATED"
@@ -47,6 +53,6 @@ export default async function getTokenDetails(
 		} as NftDetails);
 	} catch (e) {
 		logger.error("err:", e);
-		return reply.status(404).send({ error: e.message });
+		return reply.status(500).send({ error: e.message });
 	}
 }
