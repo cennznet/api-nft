@@ -11,7 +11,7 @@ const fastify = Fastify({
 fastify.register(mongoConnector);
 fastify.register(routes);
 
-fastify.listen(process.env.PORT || 3000, "0.0.0.0", function (err, _address) {
+fastify.listen(process.env.PORT || 3000, "0.0.0.0", function (err) {
 	if (err) {
 		fastify.log.error(err);
 		process.exit(1);
