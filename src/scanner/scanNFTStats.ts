@@ -9,7 +9,10 @@ import mongoose from "mongoose";
 import { SignedBlock } from "@polkadot/types/interfaces/runtime";
 import { fetchNFTBlockFromUncoverForRange } from "./utils/fetchNFTBlockNumberForRange";
 import { updateProcessedBlockInDB } from "@/src/scanner/dbOperations";
-import {fetchNFTsFromExtrinsic, processNFTExtrinsicData} from "@/src/scanner/utils/processNFTExtrinsic";
+import {
+	fetchNFTsFromExtrinsic,
+	processNFTExtrinsicData,
+} from "@/src/scanner/utils/processNFTExtrinsic";
 import {
 	fetchSupportedAssets,
 	getExtrinsicParams,
@@ -82,18 +85,23 @@ async function main() {
 								logger.error("apiAt find call failed");
 								logger.error(error);
 							}
-							const isBatchTx = (call.section === 'utility' &&
-								(call.method === "batch") || (call.method === 'batchAll'));
+							const isBatchTx =
+								(call.section === "utility" && call.method === "batch") ||
+								call.method === "batchAll";
 							if (isBatchTx) {
 								const extrinsics = params[0];
-								if (extrinsics.type === 'Vec<Call>') {
+								if (extrinsics.type === "Vec<Call>") {
 									await Promise.all(
 										// Process all extrinsics in batch call one by one
-										extrinsics.value.map( async (ext, idx) => {
+										extrinsics.value.map(async (ext, idx) => {
 											const call = apiAt.findCall(ext.callIndex);
 											const callJSON = call.toJSON();
 											const batchExtParam = callJSON.args.map((arg) => {
-												return { type: arg.type, name: arg.name, value: ext.args[convertToSnakeCase(arg.name)] };
+												return {
+													type: arg.type,
+													name: arg.name,
+													value: ext.args[convertToSnakeCase(arg.name)],
+												};
 											});
 											await fetchNFTsFromExtrinsic({
 												call,
@@ -105,7 +113,7 @@ async function main() {
 												params: batchExtParam,
 												blockNumber,
 												blockHash,
-												batchIndex: idx
+												batchIndex: idx,
 											});
 										})
 									);
@@ -114,7 +122,14 @@ async function main() {
 								await fetchNFTsFromExtrinsic({
 									call,
 									extIndex: index,
-									allEvents, block, api, e, params, blockNumber, blockHash});
+									allEvents,
+									block,
+									api,
+									e,
+									params,
+									blockNumber,
+									blockHash,
+								});
 							}
 						})
 					);
@@ -146,7 +161,10 @@ async function main() {
 }
 
 function convertToSnakeCase(input) {
-	return input.split(/(?=[A-Z])/).join('_').toLowerCase();
+	return input
+		.split(/(?=[A-Z])/)
+		.join("_")
+		.toLowerCase();
 }
 
 function sleep(ms) {

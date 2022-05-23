@@ -24,11 +24,18 @@ import {
 } from "@/src/scanner/utils/trackTokenAuction";
 import { trackBidData } from "@/src/scanner/utils/trackBidData";
 import { trackCancelSaleData } from "@/src/scanner/utils/trackSaleCancel";
-import {ExtrinsicDetails} from "@/src/types";
-import {filterExtrinsicEvents, getTimestamp, isExtrinsicSuccessful} from "@/src/scanner/utils/commonUtils";
+import { ExtrinsicDetails } from "@/src/types";
+import {
+	filterExtrinsicEvents,
+	getTimestamp,
+	isExtrinsicSuccessful,
+} from "@/src/scanner/utils/commonUtils";
 
-export async function fetchNFTsFromExtrinsic(extrinsicDetails: ExtrinsicDetails) {
-	const { call,
+export async function fetchNFTsFromExtrinsic(
+	extrinsicDetails: ExtrinsicDetails
+) {
+	const {
+		call,
 		extIndex,
 		allEvents,
 		block,
@@ -37,17 +44,15 @@ export async function fetchNFTsFromExtrinsic(extrinsicDetails: ExtrinsicDetails)
 		params,
 		blockNumber,
 		blockHash,
-		batchIndex} = extrinsicDetails;
+		batchIndex,
+	} = extrinsicDetails;
 	if (call.section === "nft") {
-		const extrinsicRelatedEvents = filterExtrinsicEvents(
-			extIndex,
-			allEvents
-		);
+		const extrinsicRelatedEvents = filterExtrinsicEvents(extIndex, allEvents);
 		if (isExtrinsicSuccessful(extIndex, extrinsicRelatedEvents)) {
 			const blockTimestamp = getTimestamp(block.block, api);
 			const txHash = e.hash.toString();
 			const owner = e.signer.toString();
-			const {method} = call;
+			const { method } = call;
 			await processNFTExtrinsicData({
 				method,
 				params,
@@ -58,7 +63,7 @@ export async function fetchNFTsFromExtrinsic(extrinsicDetails: ExtrinsicDetails)
 				owner,
 				blockNumber,
 				blockHash,
-				batchIndex
+				batchIndex,
 			});
 		}
 	}
@@ -74,12 +79,14 @@ export async function processNFTExtrinsicData({
 	blockNumber,
 	owner,
 	blockHash,
-	batchIndex = 0
+	batchIndex = 0,
 }) {
 	logger.info(`Event triggered::${method}`);
 	const date = blockTimestamp;
 	const findNFTEvent = events.filter(({ event }) => event.section === "nft");
-	const eventData = findNFTEvent ? findNFTEvent[batchIndex].event.data.toJSON() : null;
+	const eventData = findNFTEvent
+		? findNFTEvent[batchIndex].event.data.toJSON()
+		: null;
 	switch (method) {
 		case "mintUnique": {
 			if (!eventData) {

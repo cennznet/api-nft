@@ -1,6 +1,6 @@
 import { FastifyRequest } from "fastify";
-import {Call} from "@polkadot/types/interfaces";
-import {GenericExtrinsic} from "@polkadot/types";
+import { Call } from "@polkadot/types/interfaces";
+import { GenericExtrinsic } from "@polkadot/types";
 
 export interface TokenQueryObject {
 	tokenId: string;
