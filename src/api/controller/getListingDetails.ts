@@ -36,7 +36,7 @@ export default async function getListingDetails(
 		const listingStarted = listingData.find(
 			(nft) => nft.eventType === "LISTING_STARTED"
 		);
-		if (listingStarted) {
+		if (listingStarted && listingStarted.data) {
 			const eventDetails = JSON.parse(listingStarted.data);
 
 			tokenIds = eventDetails.tokenIds;
@@ -56,7 +56,7 @@ export default async function getListingDetails(
 
 		// get all bids
 		listingData
-			.filter((list) => list.eventType === "NFT_BID")
+			.filter((list) => list.eventType === "NFT_BID" && list.data)
 			.forEach((listing) => {
 				const {
 					txHash,
@@ -78,8 +78,10 @@ export default async function getListingDetails(
 				nft.eventType === "LISTING_CLOSED"
 		);
 		if (
-			listingClosed?.eventType === "LISTING_CANCELED" ||
-			listingClosed?.eventType === "LISTING_CLOSED"
+			listingClosed &&
+			(listingClosed.eventType === "LISTING_CANCELED" ||
+				listingClosed.eventType === "LISTING_CLOSED") &&
+			listingClosed.data
 		) {
 			const {
 				txHash,

@@ -16,6 +16,7 @@ export interface EventTracker {
 	streamId: string;
 	data: string;
 	eventType: string;
+	signer: string;
 }
 
 export type Request = FastifyRequest<{
