@@ -76,11 +76,11 @@ async function main() {
 					apiAt = await api.at(blockHash as unknown as BlockHash);
 
 					await Promise.all(
-						extrinsics.map(async (e, index) => {
-							const params = getExtrinsicParams(e);
+						extrinsics.map(async (extrinsic, index) => {
+							const params = getExtrinsicParams(extrinsic);
 							let call;
 							try {
-								call = apiAt.findCall(e.callIndex);
+								call = apiAt.findCall(extrinsic.callIndex);
 							} catch (error) {
 								logger.error("apiAt find call failed");
 								logger.error(error);
@@ -89,32 +89,36 @@ async function main() {
 								call.section === "utility" &&
 								(call.method === "batch" || call.method === "batchAll");
 							if (isBatchTx) {
-								const extrinsics = params[0];
-								if (extrinsics.type === "Vec<Call>") {
+								const batchExtrinsics = params[0];
+								if (batchExtrinsics.type === "Vec<Call>") {
+									let batchIndex = -1;
 									await Promise.all(
 										// Process all extrinsics in batch call one by one
-										extrinsics.value.map(async (ext, idx) => {
+										batchExtrinsics.value.map(async (ext) => {
 											const call = apiAt.findCall(ext.callIndex);
-											const callJSON = call.toJSON();
-											const batchExtParam = callJSON.args.map((arg) => {
-												return {
-													type: arg.type,
-													name: arg.name,
-													value: ext.args[convertToSnakeCase(arg.name)],
-												};
-											});
-											await fetchNFTsFromExtrinsic({
-												call,
-												extIndex: index,
-												allEvents,
-												block,
-												api,
-												e,
-												params: batchExtParam,
-												blockNumber,
-												blockHash,
-												batchIndex: idx,
-											});
+											if (call.section === "nft") {
+												batchIndex++;
+												const callJSON = call.toJSON();
+												const batchExtParam = callJSON.args.map((arg) => {
+													return {
+														type: arg.type,
+														name: arg.name,
+														value: ext.args[convertToSnakeCase(arg.name)],
+													};
+												});
+												await fetchNFTsFromExtrinsic({
+													call,
+													extIndex: index,
+													allEvents,
+													block,
+													api,
+													extrinsic,
+													params: batchExtParam,
+													blockNumber,
+													blockHash,
+													batchIndex,
+												});
+											}
 										})
 									);
 								}
@@ -125,7 +129,7 @@ async function main() {
 									allEvents,
 									block,
 									api,
-									e,
+									extrinsic,
 									params,
 									blockNumber,
 									blockHash,

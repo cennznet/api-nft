@@ -60,7 +60,7 @@ export interface ExtrinsicDetails {
 	allEvents: Codec;
 	block: SignedBlock;
 	api: Api;
-	e: GenericExtrinsic;
+	extrinsic: GenericExtrinsic;
 	params: [];
 	blockNumber: number;
 	blockHash: BlockHash;

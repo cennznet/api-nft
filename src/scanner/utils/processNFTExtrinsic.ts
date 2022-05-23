@@ -40,32 +40,33 @@ export async function fetchNFTsFromExtrinsic(
 		allEvents,
 		block,
 		api,
-		e,
+		extrinsic,
 		params,
 		blockNumber,
 		blockHash,
 		batchIndex,
 	} = extrinsicDetails;
-	if (call.section === "nft") {
-		const extrinsicRelatedEvents = filterExtrinsicEvents(extIndex, allEvents);
-		if (isExtrinsicSuccessful(extIndex, extrinsicRelatedEvents)) {
-			const blockTimestamp = getTimestamp(block.block, api);
-			const txHash = e.hash.toString();
-			const owner = e.signer.toString();
-			const { method } = call;
-			await processNFTExtrinsicData({
-				method,
-				params,
-				events: extrinsicRelatedEvents,
-				txHash,
-				blockTimestamp,
-				api,
-				owner,
-				blockNumber,
-				blockHash,
-				batchIndex,
-			});
-		}
+	if (call.section !== "nft") {
+		return;
+	}
+	const extrinsicRelatedEvents = filterExtrinsicEvents(extIndex, allEvents);
+	if (isExtrinsicSuccessful(extIndex, extrinsicRelatedEvents)) {
+		const blockTimestamp = getTimestamp(block.block, api);
+		const txHash = extrinsic.hash.toString();
+		const owner = extrinsic.signer.toString();
+		const { method } = call;
+		await processNFTExtrinsicData({
+			method,
+			params,
+			events: extrinsicRelatedEvents,
+			txHash,
+			blockTimestamp,
+			api,
+			owner,
+			blockNumber,
+			blockHash,
+			batchIndex,
+		});
 	}
 }
 
