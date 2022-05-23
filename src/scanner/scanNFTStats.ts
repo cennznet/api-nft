@@ -86,8 +86,8 @@ async function main() {
 								logger.error(error);
 							}
 							const isBatchTx =
-								(call.section === "utility" && call.method === "batch") ||
-								call.method === "batchAll";
+								call.section === "utility" &&
+								(call.method === "batch" || call.method === "batchAll");
 							if (isBatchTx) {
 								const extrinsics = params[0];
 								if (extrinsics.type === "Vec<Call>") {
