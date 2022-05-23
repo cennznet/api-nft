@@ -64,7 +64,7 @@ export async function trackEventDataSet(tokens) {
 			streamType: { $in: streamTypes },
 			version: { $in: versions },
 		});
-		if (!checkDataExist) {
+		if (checkDataExist.length === 0) {
 			logger.info(
 				`saving multiple event data for  ${JSON.stringify(data)} in db`
 			);
