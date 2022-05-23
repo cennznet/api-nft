@@ -86,7 +86,7 @@ export async function processNFTExtrinsicData({
 	const date = blockTimestamp;
 	const findNFTEvent = events.filter(({ event }) => event.section === "nft");
 	const eventData = findNFTEvent
-		? findNFTEvent[batchIndex].event.data.toJSON()
+		? findNFTEvent[batchIndex]?.event.data.toJSON()
 		: null;
 	switch (method) {
 		case "mintUnique": {
