@@ -42,11 +42,17 @@ export default async function getTokenDetails(
 				: lastEvent.signer;
 
 		const timeline: Timeline[] = nftData
-			.filter((nft) => nft.data !== undefined)
+			.filter(
+				(nft) =>
+					nft.eventType !== "LISTING_CLOSED" &&
+					nft.eventType !== "LISTING_CANCELED" &&
+					nft.data !== undefined
+			)
 			.map((nft) => {
 				const { date: timestamp, listingId, txHash } = JSON.parse(nft.data);
 				return {
-					type: nft.eventType,
+					type:
+						nft.eventType === "LISTING_STARTED" ? "NFT_LISTED" : nft.eventType,
 					txHash,
 					timestamp,
 					listingId,
