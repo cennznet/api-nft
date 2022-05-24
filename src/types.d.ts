@@ -1,4 +1,6 @@
 import { FastifyRequest } from "fastify";
+import { Call } from "@polkadot/types/interfaces";
+import { GenericExtrinsic } from "@polkadot/types";
 
 export interface TokenQueryObject {
 	tokenId: string;
@@ -50,4 +52,17 @@ export interface ListingDetails {
 	timeline: ListingTimeline[];
 	assetId: number;
 	assetSymbol: string;
+}
+
+export interface ExtrinsicDetails {
+	call: Call;
+	extIndex: number;
+	allEvents: Codec;
+	block: SignedBlock;
+	api: Api;
+	extrinsic: GenericExtrinsic;
+	params: [];
+	blockNumber: number;
+	blockHash: BlockHash;
+	batchIndex?: number;
 }

@@ -24,6 +24,51 @@ import {
 } from "@/src/scanner/utils/trackTokenAuction";
 import { trackBidData } from "@/src/scanner/utils/trackBidData";
 import { trackCancelSaleData } from "@/src/scanner/utils/trackSaleCancel";
+import { ExtrinsicDetails } from "@/src/types";
+import {
+	filterExtrinsicEvents,
+	getTimestamp,
+	isExtrinsicSuccessful,
+} from "@/src/scanner/utils/commonUtils";
+
+export async function fetchNFTsFromExtrinsic(
+	extrinsicDetails: ExtrinsicDetails
+) {
+	const {
+		call,
+		extIndex,
+		allEvents,
+		block,
+		api,
+		extrinsic,
+		params,
+		blockNumber,
+		blockHash,
+		batchIndex,
+	} = extrinsicDetails;
+	if (call.section !== "nft") {
+		return;
+	}
+	const extrinsicRelatedEvents = filterExtrinsicEvents(extIndex, allEvents);
+	if (isExtrinsicSuccessful(extIndex, extrinsicRelatedEvents)) {
+		const blockTimestamp = getTimestamp(block.block, api);
+		const txHash = extrinsic.hash.toString();
+		const owner = extrinsic.signer.toString();
+		const { method } = call;
+		await processNFTExtrinsicData({
+			method,
+			params,
+			events: extrinsicRelatedEvents,
+			txHash,
+			blockTimestamp,
+			api,
+			owner,
+			blockNumber,
+			blockHash,
+			batchIndex,
+		});
+	}
+}
 
 export async function processNFTExtrinsicData({
 	method,
@@ -35,11 +80,14 @@ export async function processNFTExtrinsicData({
 	blockNumber,
 	owner,
 	blockHash,
+	batchIndex = 0,
 }) {
 	logger.info(`Event triggered::${method}`);
 	const date = blockTimestamp;
-	const findNFTEvent = events.find(({ event }) => event.section === "nft");
-	const eventData = findNFTEvent ? findNFTEvent.event.data.toJSON() : null;
+	const findNFTEvent = events.filter(({ event }) => event.section === "nft");
+	const eventData = findNFTEvent
+		? findNFTEvent[batchIndex]?.event.data.toJSON()
+		: null;
 	switch (method) {
 		case "mintUnique": {
 			if (!eventData) {

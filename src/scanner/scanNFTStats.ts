@@ -9,13 +9,14 @@ import mongoose from "mongoose";
 import { SignedBlock } from "@polkadot/types/interfaces/runtime";
 import { fetchNFTBlockFromUncoverForRange } from "./utils/fetchNFTBlockNumberForRange";
 import { updateProcessedBlockInDB } from "@/src/scanner/dbOperations";
-import { processNFTExtrinsicData } from "@/src/scanner/utils/processNFTExtrinsic";
+import {
+	fetchNFTsFromExtrinsic,
+	processNFTExtrinsicData,
+} from "@/src/scanner/utils/processNFTExtrinsic";
 import {
 	fetchSupportedAssets,
-	filterExtrinsicEvents,
 	getExtrinsicParams,
 	getTimestamp,
-	isExtrinsicSuccessful,
 } from "@/src/scanner/utils/commonUtils";
 const { LastBlockScan } = require("@/src/mongo/models");
 config();
@@ -75,38 +76,64 @@ async function main() {
 					apiAt = await api.at(blockHash as unknown as BlockHash);
 
 					await Promise.all(
-						extrinsics.map(async (e, index) => {
-							const params = getExtrinsicParams(e);
+						extrinsics.map(async (extrinsic, index) => {
+							const params = getExtrinsicParams(extrinsic);
 							let call;
 							try {
-								call = apiAt.findCall(e.callIndex);
+								call = apiAt.findCall(extrinsic.callIndex);
 							} catch (error) {
 								logger.error("apiAt find call failed");
 								logger.error(error);
 							}
-
-							if (call.section === "nft") {
-								const extrinsicRelatedEvents = filterExtrinsicEvents(
-									index,
-									allEvents
-								);
-								if (isExtrinsicSuccessful(index, extrinsicRelatedEvents)) {
-									const blockTimestamp = getTimestamp(block.block, api);
-									const txHash = e.hash.toString();
-									const owner = e.signer.toString();
-									const { method } = call;
-									await processNFTExtrinsicData({
-										method,
-										params,
-										events: extrinsicRelatedEvents,
-										txHash,
-										blockTimestamp,
-										api,
-										owner,
-										blockNumber,
-										blockHash,
-									});
+							const isBatchTx =
+								call.section === "utility" &&
+								(call.method === "batch" || call.method === "batchAll");
+							if (isBatchTx) {
+								const batchExtrinsics = params[0];
+								if (batchExtrinsics.type === "Vec<Call>") {
+									let batchIndex = -1;
+									await Promise.all(
+										// Process all extrinsics in batch call one by one
+										batchExtrinsics.value.map(async (ext) => {
+											const call = apiAt.findCall(ext.callIndex);
+											if (call.section === "nft") {
+												batchIndex++;
+												const callJSON = call.toJSON();
+												const batchExtParam = callJSON.args.map((arg) => {
+													return {
+														type: arg.type,
+														name: arg.name,
+														value: ext.args[convertToSnakeCase(arg.name)],
+													};
+												});
+												await fetchNFTsFromExtrinsic({
+													call,
+													extIndex: index,
+													allEvents,
+													block,
+													api,
+													extrinsic,
+													params: batchExtParam,
+													blockNumber,
+													blockHash,
+													batchIndex,
+												});
+											}
+										})
+									);
 								}
+							} else {
+								await fetchNFTsFromExtrinsic({
+									call,
+									extIndex: index,
+									allEvents,
+									block,
+									api,
+									extrinsic,
+									params,
+									blockNumber,
+									blockHash,
+								});
 							}
 						})
 					);
@@ -135,6 +162,13 @@ async function main() {
 			logger.info(`looping thro next chunk`);
 		}
 	}
+}
+
+function convertToSnakeCase(input) {
+	return input
+		.split(/(?=[A-Z])/)
+		.join("_")
+		.toLowerCase();
 }
 
 function sleep(ms) {
