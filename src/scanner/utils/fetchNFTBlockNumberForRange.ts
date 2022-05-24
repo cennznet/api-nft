@@ -1,5 +1,5 @@
 import axios from "axios";
-import {logger} from "@/src/logger";
+import { logger } from "@/src/logger";
 
 export async function fetchNFTBlockFromUncoverForRange(start, end) {
 	let startDate = new Date(start);
@@ -20,7 +20,10 @@ export async function fetchNFTBlockFromUncoverForRange(start, end) {
 			let nftResponse;
 			let utilityResponse;
 			if (moreNFTsExists && moreUtilityBatchExists) {
-				[nftResponse, utilityResponse] = await Promise.all([axios.get(urlWithNFT), axios.get(urlWithBatch)]);
+				[nftResponse, utilityResponse] = await Promise.all([
+					axios.get(urlWithNFT),
+					axios.get(urlWithBatch),
+				]);
 			} else if (moreNFTsExists) {
 				nftResponse = await axios.get(urlWithNFT);
 			} else if (moreUtilityBatchExists) {
@@ -28,8 +31,10 @@ export async function fetchNFTBlockFromUncoverForRange(start, end) {
 			}
 			nftBlockNumbers = nftResponse?.data?.data;
 			batchTxBlockNumbers = utilityResponse?.data?.data;
-			moreNFTsExists = nftBlockNumbers && nftBlockNumbers.length > 0 ? true : false;
-			moreUtilityBatchExists = batchTxBlockNumbers && batchTxBlockNumbers.length > 0 ? true : false;
+			moreNFTsExists =
+				nftBlockNumbers && nftBlockNumbers.length > 0 ? true : false;
+			moreUtilityBatchExists =
+				batchTxBlockNumbers && batchTxBlockNumbers.length > 0 ? true : false;
 			page = page + 1;
 			if (moreNFTsExists) {
 				globalBlockNumbers = globalBlockNumbers.concat(nftBlockNumbers);

@@ -25,7 +25,11 @@ const range = (start, stop) =>
 	Array.from({ length: stop - start + 1 }, (_, i) => start + i);
 
 async function main() {
-	const api = await Api.create({ provider: process.env.PROVIDER });
+	const TIMEOUT_MS = 120 * 1000;
+	const api = await Api.create({
+		provider: process.env.PROVIDER,
+		timeout: TIMEOUT_MS,
+	});
 	await mongoose.connect(process.env.MONGO_URI);
 	await fetchSupportedAssets(api);
 	let fetchOldData = process.env.USE_UNCOVER;
