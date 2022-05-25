@@ -30,20 +30,28 @@ export default async function getTokenDetails(
 		const createdDetails = nftData.find(
 			(nft) => nft.eventType === "NFT_CREATED"
 		);
-		const { metadataUri } = JSON.parse(createdDetails.data);
+		const { metadataUri } =
+			createdDetails && createdDetails.data
+				? JSON.parse(createdDetails.data)
+				: "N/A";
 
 		const lastEvent = nftData.slice(-1)[0];
-		const { owner } = JSON.parse(lastEvent.data);
+		const owner =
+			lastEvent && lastEvent.data
+				? JSON.parse(lastEvent.data)?.owner
+				: lastEvent.signer;
 
-		const timeline: Timeline[] = nftData.map((nft) => {
-			const { date: timestamp, listingId, txHash } = JSON.parse(nft.data);
-			return {
-				type: nft.eventType,
-				txHash,
-				timestamp,
-				listingId,
-			};
-		});
+		const timeline: Timeline[] = nftData
+			.filter((nft) => nft.data !== undefined)
+			.map((nft) => {
+				const { date: timestamp, listingId, txHash } = JSON.parse(nft.data);
+				return {
+					type: nft.eventType,
+					txHash,
+					timestamp,
+					listingId,
+				};
+			});
 
 		return reply.status(200).send({
 			tokenId: tokenIdRaw,
