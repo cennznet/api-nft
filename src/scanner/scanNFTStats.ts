@@ -86,8 +86,7 @@ async function main() {
 						await Promise.all(
 							extrinsics.map(async (extrinsic, extrinsicIndex) => {
 								const params = getExtrinsicParams(extrinsic);
-								let call;
-								call = apiAt.findCall(extrinsic.callIndex);
+								const call = apiAt.findCall(extrinsic.callIndex);
 								const isBatchTx =
 									call.section === "utility" &&
 									(call.method === "batch" || call.method === "batchAll");
