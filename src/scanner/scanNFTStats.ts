@@ -70,20 +70,25 @@ async function main() {
 				chunk.map(async (blockNumber) => {
 					logger.info(`HEALTH CHECK => OK`);
 					logger.info(`At blocknumber: ${blockNumber}`);
-					const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
-					console.log("blockHash:", blockHash.toString());
-					const block: SignedBlock = (await api.rpc.chain.getBlock(
-						blockHash as unknown as BlockHash
-					)) as unknown as SignedBlock;
-					const extrinsics = block.block.extrinsics;
-					let allEvents;
+					let allEvents, extrinsics;
+					let block, blockHash;
 					try {
+						blockHash = await api.rpc.chain.getBlockHash(blockNumber);
+						console.log("blockHash:", blockHash.toString());
+						const block: SignedBlock = (await api.rpc.chain.getBlock(
+							blockHash as unknown as BlockHash
+						)) as unknown as SignedBlock;
+						extrinsics = block.block.extrinsics;
+
 						allEvents = await api.query.system.events.at(
 							blockHash as unknown as BlockHash
 						);
 						apiAt = await api.at(blockHash as unknown as BlockHash);
 					} catch (e) {
 						console.log(`Error ${e} at block ${blockNumber}`);
+						if (e.message.includes("No response received from RPC endpoint")) {
+							process.exit(1);
+						}
 						throw e;
 					}
 
@@ -94,6 +99,7 @@ async function main() {
 							try {
 								call = apiAt.findCall(extrinsic.callIndex);
 							} catch (error) {
+								await api.disconnect();
 								logger.error("apiAt find call failed");
 								logger.error(error);
 							}
@@ -187,4 +193,9 @@ function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-main().catch((err) => logger.error(err));
+main().catch((err) => {
+	if (err.message.includes("No response received from RPC endpoint")) {
+		process.exit(1);
+	}
+	logger.error(err);
+});
