@@ -1,7 +1,7 @@
 import { BlockHash, EventRecord } from "@polkadot/types/interfaces";
 import { processAuctionSoldEvent } from "@/src/scanner/utils/trackTokenAuction";
 
-import { Api } from "@cennznet/api";
+import { Api, WsProvider } from "@cennznet/api";
 import { config } from "dotenv";
 import { logger } from "@/src/logger";
 import { Vec } from "@polkadot/types-codec";
@@ -26,8 +26,10 @@ const range = (start, stop) =>
 
 async function main() {
 	const TIMEOUT_MS = 120 * 1000;
+	// const autoConnectMs = TIMEOUT_MS;
+	const provider = new WsProvider(process.env.PROVIDER);
 	const api = await Api.create({
-		provider: process.env.PROVIDER,
+		provider,
 		timeout: TIMEOUT_MS,
 	});
 	await mongoose.connect(process.env.MONGO_URI);
@@ -59,7 +61,7 @@ async function main() {
 
 		const chunkSize = process.env.CHUNK_SIZE
 			? parseInt(process.env.CHUNK_SIZE)
-			: 20;
+			: 5;
 		for (let i = 0; i < globalBlockNumbers.length; i += chunkSize) {
 			const chunk = globalBlockNumbers.slice(i, i + chunkSize);
 			logger.info(`Processing chunk ${chunk}`);
@@ -73,11 +75,17 @@ async function main() {
 					const block: SignedBlock = (await api.rpc.chain.getBlock(
 						blockHash as unknown as BlockHash
 					)) as unknown as SignedBlock;
-					const allEvents = await api.query.system.events.at(
-						blockHash as unknown as BlockHash
-					);
 					const extrinsics = block.block.extrinsics;
-					apiAt = await api.at(blockHash as unknown as BlockHash);
+					let allEvents;
+					try {
+						allEvents = await api.query.system.events.at(
+							blockHash as unknown as BlockHash
+						);
+						apiAt = await api.at(blockHash as unknown as BlockHash);
+					} catch (e) {
+						console.log(`Error ${e} at block ${blockNumber}`);
+						throw e;
+					}
 
 					await Promise.all(
 						extrinsics.map(async (extrinsic, index) => {
