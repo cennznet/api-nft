@@ -1,7 +1,7 @@
 import { BlockHash, EventRecord } from "@polkadot/types/interfaces";
 import { processAuctionSoldEvent } from "@/src/scanner/utils/trackTokenAuction";
 
-import {Api, WsProvider} from "@cennznet/api";
+import { Api, WsProvider } from "@cennznet/api";
 import { config } from "dotenv";
 import { logger } from "@/src/logger";
 import { Vec } from "@polkadot/types-codec";
@@ -27,7 +27,7 @@ const range = (start, stop) =>
 async function main() {
 	const TIMEOUT_MS = 120 * 1000;
 	const autoConnectMs = TIMEOUT_MS;
-	const provider = new WsProvider( process.env.PROVIDER, autoConnectMs);
+	const provider = new WsProvider(process.env.PROVIDER, autoConnectMs);
 	const api = await Api.create({
 		provider,
 		timeout: TIMEOUT_MS,
