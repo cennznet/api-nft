@@ -30,6 +30,11 @@ import {
 	getTimestamp,
 	isExtrinsicSuccessful,
 } from "@/src/scanner/utils/commonUtils";
+import { SignedBlock } from "@polkadot/types/interfaces/runtime";
+import { Api } from "@cennznet/api";
+import { BlockHash } from "@polkadot/types/interfaces";
+import { AnyTuple, Codec } from "@polkadot/types-codec/types";
+import { GenericExtrinsic } from "@polkadot/types";
 
 export async function fetchNFTsFromExtrinsic(
 	extrinsicDetails: ExtrinsicDetails
@@ -285,4 +290,57 @@ export async function processNFTExtrinsicData({
 			break;
 		}
 	}
+}
+
+export async function processBatchCall(
+	params,
+	apiAt,
+	extrinsicIndex: number,
+	allEvents: Codec,
+	block: SignedBlock,
+	api: Api,
+	extrinsic: GenericExtrinsic<AnyTuple>,
+	blockNumber,
+	blockHash: BlockHash
+) {
+	const batchExtrinsics = params[0];
+	if (batchExtrinsics.type === "Vec<Call>") {
+		let batchIndex = -1;
+		await Promise.all(
+			// Process all extrinsics in batch call one by one
+			batchExtrinsics.value.map(async (ext) => {
+				const call = apiAt.findCall(ext.callIndex);
+				if (call.section === "nft") {
+					batchIndex++;
+					const callJSON = call.toJSON();
+					const batchExtParam = callJSON.args.map((arg) => {
+						return {
+							type: arg.type,
+							name: arg.name,
+							value: ext.args[convertToSnakeCase(arg.name)],
+						};
+					});
+					await fetchNFTsFromExtrinsic({
+						call,
+						extIndex: extrinsicIndex,
+						allEvents,
+						block,
+						api,
+						extrinsic,
+						params: batchExtParam,
+						blockNumber,
+						blockHash,
+						batchIndex,
+					});
+				}
+			})
+		);
+	}
+}
+
+function convertToSnakeCase(input) {
+	return input
+		.split(/(?=[A-Z])/)
+		.join("_")
+		.toLowerCase();
 }

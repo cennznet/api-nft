@@ -11,6 +11,7 @@ import { fetchNFTBlockFromUncoverForRange } from "./utils/fetchNFTBlockNumberFor
 import { updateProcessedBlockInDB } from "@/src/scanner/dbOperations";
 import {
 	fetchNFTsFromExtrinsic,
+	processBatchCall,
 	processNFTExtrinsicData,
 } from "@/src/scanner/utils/processNFTExtrinsic";
 import {
@@ -83,7 +84,7 @@ async function main() {
 						apiAt = await api.at(blockHash as unknown as BlockHash);
 
 						await Promise.all(
-							extrinsics.map(async (extrinsic, index) => {
+							extrinsics.map(async (extrinsic, extrinsicIndex) => {
 								const params = getExtrinsicParams(extrinsic);
 								let call;
 								call = apiAt.findCall(extrinsic.callIndex);
@@ -91,43 +92,21 @@ async function main() {
 									call.section === "utility" &&
 									(call.method === "batch" || call.method === "batchAll");
 								if (isBatchTx) {
-									const batchExtrinsics = params[0];
-									if (batchExtrinsics.type === "Vec<Call>") {
-										let batchIndex = -1;
-										await Promise.all(
-											// Process all extrinsics in batch call one by one
-											batchExtrinsics.value.map(async (ext) => {
-												const call = apiAt.findCall(ext.callIndex);
-												if (call.section === "nft") {
-													batchIndex++;
-													const callJSON = call.toJSON();
-													const batchExtParam = callJSON.args.map((arg) => {
-														return {
-															type: arg.type,
-															name: arg.name,
-															value: ext.args[convertToSnakeCase(arg.name)],
-														};
-													});
-													await fetchNFTsFromExtrinsic({
-														call,
-														extIndex: index,
-														allEvents,
-														block,
-														api,
-														extrinsic,
-														params: batchExtParam,
-														blockNumber,
-														blockHash,
-														batchIndex,
-													});
-												}
-											})
-										);
-									}
+									await processBatchCall(
+										params,
+										apiAt,
+										extrinsicIndex,
+										allEvents,
+										block,
+										api,
+										extrinsic,
+										blockNumber,
+										blockHash
+									);
 								} else {
 									await fetchNFTsFromExtrinsic({
 										call,
-										extIndex: index,
+										extIndex: extrinsicIndex,
 										allEvents,
 										block,
 										api,
@@ -171,13 +150,6 @@ async function main() {
 			logger.info(`looping thro next chunk`);
 		}
 	}
-}
-
-function convertToSnakeCase(input) {
-	return input
-		.split(/(?=[A-Z])/)
-		.join("_")
-		.toLowerCase();
 }
 
 function sleep(ms) {
