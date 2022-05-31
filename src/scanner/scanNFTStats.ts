@@ -138,6 +138,7 @@ async function main() {
 					} catch (e) {
 						console.log(`Error ${e} at block ${blockNumber}`);
 						if (e.message.includes("No response received from RPC endpoint")) {
+							await api.disconnect();
 							process.exit(1);
 						}
 						throw e;
