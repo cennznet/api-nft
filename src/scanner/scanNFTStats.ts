@@ -11,6 +11,7 @@ import { fetchNFTBlockFromUncoverForRange } from "./utils/fetchNFTBlockNumberFor
 import { updateProcessedBlockInDB } from "@/src/scanner/dbOperations";
 import {
 	fetchNFTsFromExtrinsic,
+	processBatchCall,
 	processNFTExtrinsicData,
 } from "@/src/scanner/utils/processNFTExtrinsic";
 import {
@@ -70,102 +71,77 @@ async function main() {
 				chunk.map(async (blockNumber) => {
 					logger.info(`HEALTH CHECK => OK`);
 					logger.info(`At blocknumber: ${blockNumber}`);
-					const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
-					console.log("blockHash:", blockHash.toString());
-					const block: SignedBlock = (await api.rpc.chain.getBlock(
-						blockHash as unknown as BlockHash
-					)) as unknown as SignedBlock;
-					const extrinsics = block.block.extrinsics;
-					let allEvents;
 					try {
-						allEvents = await api.query.system.events.at(
+						const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
+						console.log("blockHash:", blockHash.toString());
+						const block: SignedBlock = (await api.rpc.chain.getBlock(
+							blockHash as unknown as BlockHash
+						)) as unknown as SignedBlock;
+						const extrinsics = block.block.extrinsics;
+						const allEvents = await api.query.system.events.at(
 							blockHash as unknown as BlockHash
 						);
 						apiAt = await api.at(blockHash as unknown as BlockHash);
+
+						await Promise.all(
+							extrinsics.map(async (extrinsic, extrinsicIndex) => {
+								const params = getExtrinsicParams(extrinsic);
+								const call = apiAt.findCall(extrinsic.callIndex);
+								const isBatchTx =
+									call.section === "utility" &&
+									(call.method === "batch" || call.method === "batchAll");
+								if (isBatchTx) {
+									await processBatchCall(
+										params,
+										apiAt,
+										extrinsicIndex,
+										allEvents,
+										block,
+										api,
+										extrinsic,
+										blockNumber,
+										blockHash
+									);
+								} else {
+									await fetchNFTsFromExtrinsic({
+										call,
+										extIndex: extrinsicIndex,
+										allEvents,
+										block,
+										api,
+										extrinsic,
+										params,
+										blockNumber,
+										blockHash,
+									});
+								}
+							})
+						);
+						const auctionSoldEvent = (
+							allEvents as unknown as Vec<EventRecord>
+						).find(
+							({ event }) =>
+								event.section === "nft" && event.method === "AuctionSold"
+						);
+						if (auctionSoldEvent) {
+							const blockTimestamp = getTimestamp(block.block, api);
+							await processAuctionSoldEvent(
+								auctionSoldEvent.event,
+								blockTimestamp,
+								blockNumber,
+								blockHash.toString(),
+								api
+							);
+						}
+						await updateProcessedBlockInDB(blockNumber);
 					} catch (e) {
 						console.log(`Error ${e} at block ${blockNumber}`);
+						if (e.message.includes("No response received from RPC endpoint")) {
+							await api.disconnect();
+							process.exit(1);
+						}
 						throw e;
 					}
-
-					await Promise.all(
-						extrinsics.map(async (extrinsic, index) => {
-							const params = getExtrinsicParams(extrinsic);
-							let call;
-							try {
-								call = apiAt.findCall(extrinsic.callIndex);
-							} catch (error) {
-								logger.error("apiAt find call failed");
-								logger.error(error);
-							}
-							const isBatchTx =
-								call.section === "utility" &&
-								(call.method === "batch" || call.method === "batchAll");
-							if (isBatchTx) {
-								const batchExtrinsics = params[0];
-								if (batchExtrinsics.type === "Vec<Call>") {
-									let batchIndex = -1;
-									await Promise.all(
-										// Process all extrinsics in batch call one by one
-										batchExtrinsics.value.map(async (ext) => {
-											const call = apiAt.findCall(ext.callIndex);
-											if (call.section === "nft") {
-												batchIndex++;
-												const callJSON = call.toJSON();
-												const batchExtParam = callJSON.args.map((arg) => {
-													return {
-														type: arg.type,
-														name: arg.name,
-														value: ext.args[convertToSnakeCase(arg.name)],
-													};
-												});
-												await fetchNFTsFromExtrinsic({
-													call,
-													extIndex: index,
-													allEvents,
-													block,
-													api,
-													extrinsic,
-													params: batchExtParam,
-													blockNumber,
-													blockHash,
-													batchIndex,
-												});
-											}
-										})
-									);
-								}
-							} else {
-								await fetchNFTsFromExtrinsic({
-									call,
-									extIndex: index,
-									allEvents,
-									block,
-									api,
-									extrinsic,
-									params,
-									blockNumber,
-									blockHash,
-								});
-							}
-						})
-					);
-					const auctionSoldEvent = (
-						allEvents as unknown as Vec<EventRecord>
-					).find(
-						({ event }) =>
-							event.section === "nft" && event.method === "AuctionSold"
-					);
-					if (auctionSoldEvent) {
-						const blockTimestamp = getTimestamp(block.block, api);
-						await processAuctionSoldEvent(
-							auctionSoldEvent.event,
-							blockTimestamp,
-							blockNumber,
-							blockHash.toString(),
-							api
-						);
-					}
-					await updateProcessedBlockInDB(blockNumber);
 				})
 			);
 			logger.info(`Completed chunk ${chunk}`);
@@ -176,15 +152,11 @@ async function main() {
 	}
 }
 
-function convertToSnakeCase(input) {
-	return input
-		.split(/(?=[A-Z])/)
-		.join("_")
-		.toLowerCase();
-}
-
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-main().catch((err) => logger.error(err));
+main().catch((err) => {
+	logger.error(err);
+	process.exit(1);
+});
