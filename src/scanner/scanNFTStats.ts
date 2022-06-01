@@ -157,8 +157,6 @@ function sleep(ms) {
 }
 
 main().catch((err) => {
-	if (err.message.includes("No response received from RPC endpoint")) {
-		process.exit(1);
-	}
 	logger.error(err);
+	process.exit(1);
 });
